@@ -32,6 +32,21 @@ Definir os requisitos técnicos, arquiteturais e operacionais para o desenvolvim
 - JUnit 5
 - Mockito
 
+## Nomenclatura
+
+| Elemento       | Convenção            | Exemplo                   |
+|----------------| -------------------- |---------------------------|
+| Pastas         | camelCase           | `useCase`                 |
+| Classes        | PascalCase           | `CreateUserUseCase`       |
+| Interfaces     | PascalCase           | `UserRepository`          |
+| Métodos        | camelCase            | `createUser()`            |
+| Variáveis      | camelCase            | `userName`                |
+| Constantes     | SCREAMING_SNAKE_CASE | `MAX_RETRY`               |
+| Pacotes        | lowercase            | `com.project.auth`        |
+| Arquivos `.md` | kebab-case           | `create-user-use-case.md` |
+| Endpoints REST | kebab-case           | `/sign-in`                |
+| Campos JSON    | camelCase            | `expirationDate`          |
+
 
 ## Architecture
 - DDD
@@ -50,16 +65,30 @@ src/main/java/com/api
 │       ├── entity
 │       └── repository
 │
+├── infrastructure
+│   ├── user
+│   │   ├── service
+│   │   └── dao
+│   │
+│   └── coupon
+│       ├── service
+│       └── dao
+│
 ├── application
 │   ├── user
-│   │   ├── usecase
+│   │   ├── use-case
 │   │   └── dto
 │   │
 │   └── coupon
-│       ├── usecase
+│       ├── use-case
 │       └── dto
 │
-└── controllers
+└── interface
     ├── user
+    │    ├── controller
+    │    └── dto
+    │
     └── coupon
+         ├── controller
+         └── dto
 

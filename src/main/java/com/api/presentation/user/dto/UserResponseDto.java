@@ -1,4 +1,4 @@
-package com.api.interfaces.user.dto;
+package com.api.presentation.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSignInRequestDto {
-    private String email;
-    private String password;
+public class UserResponseDto {
+    private String id;
+    private String message;
 }

@@ -1,6 +1,7 @@
 package com.api.core.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -29,11 +30,13 @@ public class GlobalExceptionHandler {
         return errors;
     }
 
-    @ExceptionHandler(ConflictException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleConflict(ConflictException exception) {
+    @ExceptionHandler(RestException.class)
+    public ResponseEntity<Map<String, String>> handleRestException(RestException exception) {
         Map<String, String> error = new HashMap<>();
         error.put("message", exception.getMessage());
-        return error;
+
+        return ResponseEntity
+                .status(exception.getStatus())
+                .body(error);
     }
 }

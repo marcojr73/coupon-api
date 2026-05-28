@@ -1,14 +1,14 @@
-package com.api.interfaces.user.controller;
+package com.api.presentation.user.controller;
 
 import com.api.application.user.dto.SignInUserUseCaseInput;
 import com.api.application.user.dto.SignUpUserUseCaseInput;
 import com.api.application.user.dto.SignUpUserUseCaseOutput;
 import com.api.application.user.useCase.SignInUserUseCase;
 import com.api.application.user.useCase.SignUpUserUseCase;
-import com.api.interfaces.user.dto.SignInResponseDto;
-import com.api.interfaces.user.dto.UserResponseDto;
-import com.api.interfaces.user.dto.UserSignInRequestDto;
-import com.api.interfaces.user.dto.UserSignUpRequestDto;
+import com.api.presentation.user.dto.SignInResponseDto;
+import com.api.presentation.user.dto.UserResponseDto;
+import com.api.presentation.user.dto.UserSignInRequestDto;
+import com.api.presentation.user.dto.UserSignUpRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,7 +51,7 @@ public class AuthController {
 
         return SignInResponseDto.builder()
                 .accessToken(token)
-                .message("Created")
+                .message("Ok")
                 .build();
     }
 }

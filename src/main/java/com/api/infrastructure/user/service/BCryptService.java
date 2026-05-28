@@ -16,4 +16,8 @@ public class BCryptService implements CryptoService {
     public String encode(String text) {
         return passwordEncoder.encode(text);
     }
+
+    public boolean matches(String match1, String match2) {
+        return passwordEncoder.matches(match1, match2);
+    }
 }

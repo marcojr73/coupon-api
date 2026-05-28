@@ -5,6 +5,7 @@ import com.api.application.user.dto.SignUpUserUseCaseInput;
 import com.api.application.user.dto.SignUpUserUseCaseOutput;
 import com.api.application.user.useCase.SignInUserUseCase;
 import com.api.application.user.useCase.SignUpUserUseCase;
+import com.api.presentation.shared.dto.DefaultResponseDto;
 import com.api.presentation.user.dto.SignInResponseDto;
 import com.api.presentation.user.dto.UserResponseDto;
 import com.api.presentation.user.dto.UserSignInRequestDto;
@@ -24,7 +25,7 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDto signUp(@Valid @RequestBody UserSignUpRequestDto request) {
+    public DefaultResponseDto signUp(@Valid @RequestBody UserSignUpRequestDto request) {
         SignUpUserUseCaseInput input = SignUpUserUseCaseInput.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -33,7 +34,7 @@ public class AuthController {
 
         SignUpUserUseCaseOutput output = signUpUserUseCase.execute(input);
 
-        return UserResponseDto.builder()
+        return DefaultResponseDto.builder()
                 .id(output.getId())
                 .message("Created")
                 .build();

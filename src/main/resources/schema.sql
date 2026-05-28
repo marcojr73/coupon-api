@@ -4,3 +4,13 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS coupons (
+    id VARCHAR(36) PRIMARY KEY,
+    code VARCHAR(6) NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL,
+    discount_value DECIMAL(10, 2) NOT NULL,
+    expiration_date DATE NOT NULL,
+    published BOOLEAN NOT NULL DEFAULT TRUE,
+    created_date DATE NOT NULL DEFAULT CURRENT_DATE
+);

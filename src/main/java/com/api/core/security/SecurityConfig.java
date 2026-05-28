@@ -1,5 +1,6 @@
 package com.api.core.security;
 
+import com.api.infrastructure.user.service.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,16 +19,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthenticationFilter jwtFilter) throws Exception {
 
         http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sm -> sm.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS
-                ))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/sign-up", "/auth/sign-in").permitAll()
+                        .requestMatchers("/auth/sign-up", "/auth/sign-in", "/error").permitAll()
                         .anyRequest().authenticated()
-                );
+                )
+                .addFilterBefore(jwtFilter,
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

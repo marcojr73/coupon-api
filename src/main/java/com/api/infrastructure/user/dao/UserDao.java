@@ -32,6 +32,12 @@ public class UserDao implements UserRepository {
     }
 
     @Override
+    public Optional<User> findById(String id) {
+        String sql = "SELECT id, name, email, password FROM users WHERE id = ?";
+        return jdbcTemplate.query(sql, userRowMapper, id).stream().findFirst();
+    }
+
+    @Override
     public User create(User user) {
         String id = UUID.randomUUID().toString();
         String sql = "INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)";

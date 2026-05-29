@@ -28,6 +28,7 @@ class JwtAuthenticationFilterTest {
     private static final String USER_ID = "user-id-123";
     private static final String TOKEN = "jwt-token";
     private static final String AUTHORIZATION_HEADER = "Bearer " + TOKEN;
+    private static final String INVALID_TOKEN_MESSAGE = "{\"message\":\"Invalid token\"}";
 
     private final JwtService jwtService = mock(JwtService.class);
     private final UserDao userDao = mock(UserDao.class);
@@ -54,6 +55,7 @@ class JwtAuthenticationFilterTest {
         verifyNoInteractions(userDao);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
@@ -71,6 +73,7 @@ class JwtAuthenticationFilterTest {
         verifyNoInteractions(userDao);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(response.getStatus()).isEqualTo(200);
     }
 
     @Test
@@ -88,11 +91,11 @@ class JwtAuthenticationFilterTest {
         when(jwtService.extractSubject(TOKEN))
                 .thenReturn(USER_ID);
 
-        when(userDao.findById(USER_ID))
-                .thenReturn(Optional.of(user));
-
         when(jwtService.isValid(TOKEN))
                 .thenReturn(true);
+
+        when(userDao.findById(USER_ID))
+                .thenReturn(Optional.of(user));
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
@@ -106,19 +109,17 @@ class JwtAuthenticationFilterTest {
                 .extracting("authority")
                 .containsExactly("ROLE_USER");
 
+        assertThat(response.getStatus()).isEqualTo(200);
+
         verify(jwtService).extractSubject(TOKEN);
-        verify(userDao).findById(USER_ID);
         verify(jwtService).isValid(TOKEN);
+        verify(userDao).findById(USER_ID);
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
     @DisplayName("Não deve autenticar usuário quando token for inválido")
     void shouldNotAuthenticateUserWhenTokenIsInvalid() throws ServletException, IOException {
-        User user = User.builder()
-                .id(USER_ID)
-                .build();
-
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", AUTHORIZATION_HEADER);
 
@@ -127,20 +128,19 @@ class JwtAuthenticationFilterTest {
         when(jwtService.extractSubject(TOKEN))
                 .thenReturn(USER_ID);
 
-        when(userDao.findById(USER_ID))
-                .thenReturn(Optional.of(user));
-
         when(jwtService.isValid(TOKEN))
                 .thenReturn(false);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
+        assertUnauthorizedResponse(response);
+
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 
         verify(jwtService).extractSubject(TOKEN);
-        verify(userDao).findById(USER_ID);
         verify(jwtService).isValid(TOKEN);
-        verify(filterChain).doFilter(request, response);
+        verify(userDao, never()).findById(USER_ID);
+        verify(filterChain, never()).doFilter(request, response);
     }
 
     @Test
@@ -156,19 +156,81 @@ class JwtAuthenticationFilterTest {
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
+        assertUnauthorizedResponse(response);
+
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 
         verify(jwtService).extractSubject(TOKEN);
-        verify(userDao, never()).findById(USER_ID);
         verify(jwtService, never()).isValid(TOKEN);
-        verify(filterChain).doFilter(request, response);
+        verify(userDao, never()).findById(USER_ID);
+        verify(filterChain, never()).doFilter(request, response);
     }
 
     @Test
-    @DisplayName("Não deve autenticar novamente quando já existir autenticação no contexto")
-    void shouldNotAuthenticateAgainWhenAuthenticationAlreadyExists() throws ServletException, IOException {
+    @DisplayName("Deve retornar unauthorized quando ocorrer erro ao extrair subject do token")
+    void shouldReturnUnauthorizedWhenExtractSubjectThrowsException() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", AUTHORIZATION_HEADER);
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(jwtService.extractSubject(TOKEN))
+                .thenThrow(new RuntimeException("Invalid token"));
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertUnauthorizedResponse(response);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+
+        verify(jwtService).extractSubject(TOKEN);
+        verify(jwtService, never()).isValid(TOKEN);
+        verify(userDao, never()).findById(USER_ID);
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Deve retornar unauthorized quando usuário não for encontrado")
+    void shouldReturnUnauthorizedWhenUserIsNotFound() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", AUTHORIZATION_HEADER);
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(jwtService.extractSubject(TOKEN))
+                .thenReturn(USER_ID);
+
+        when(jwtService.isValid(TOKEN))
+                .thenReturn(true);
+
+        when(userDao.findById(USER_ID))
+                .thenReturn(Optional.empty());
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertUnauthorizedResponse(response);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+
+        verify(jwtService).extractSubject(TOKEN);
+        verify(jwtService).isValid(TOKEN);
+        verify(userDao).findById(USER_ID);
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Não deve sobrescrever autenticação existente no contexto")
+    void shouldNotOverrideExistingAuthentication() throws ServletException, IOException {
+        User user = User.builder()
+                .id(USER_ID)
+                .build();
+
+        User alreadyAuthenticatedUser = User.builder()
+                .id("already-authenticated-user")
+                .build();
+
         Authentication existingAuthentication =
-                new UsernamePasswordAuthenticationToken("principal", null);
+                new UsernamePasswordAuthenticationToken(alreadyAuthenticatedUser, null);
 
         SecurityContextHolder.getContext().setAuthentication(existingAuthentication);
 
@@ -180,32 +242,28 @@ class JwtAuthenticationFilterTest {
         when(jwtService.extractSubject(TOKEN))
                 .thenReturn(USER_ID);
 
+        when(jwtService.isValid(TOKEN))
+                .thenReturn(true);
+
+        when(userDao.findById(USER_ID))
+                .thenReturn(Optional.of(user));
+
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        assertThat(authentication).isEqualTo(existingAuthentication);
+        assertThat(authentication).isSameAs(existingAuthentication);
+        assertThat(authentication.getPrincipal()).isEqualTo(alreadyAuthenticatedUser);
 
         verify(jwtService).extractSubject(TOKEN);
-        verify(userDao, never()).findById(USER_ID);
-        verify(jwtService, never()).isValid(TOKEN);
+        verify(jwtService).isValid(TOKEN);
+        verify(userDao).findById(USER_ID);
         verify(filterChain).doFilter(request, response);
     }
 
-    @Test
-    @DisplayName("Deve lançar exceção quando usuário não for encontrado")
-    void shouldThrowExceptionWhenUserIsNotFound() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", AUTHORIZATION_HEADER);
-
-        when(jwtService.extractSubject(TOKEN))
-                .thenReturn(USER_ID);
-
-        when(userDao.findById(USER_ID))
-                .thenReturn(Optional.empty());
-
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-
-        verify(jwtService, never()).isValid(TOKEN);
+    private void assertUnauthorizedResponse(MockHttpServletResponse response) throws IOException {
+        assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getContentType()).isEqualTo("application/json");
+        assertThat(response.getContentAsString()).isEqualTo(INVALID_TOKEN_MESSAGE);
     }
 }

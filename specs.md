@@ -18,35 +18,29 @@ Definir os requisitos técnicos, arquiteturais e operacionais para o desenvolvim
 - Java 17
 - Spring boot
 - Maven
-
-## Persistência
-- Spring Data JPA
-- Hibernate
-- PostgreSQL
+- H2 em memória
 
 ## Documentação
 - OpenAPI 3 / Swagger
 
-
 ## Testes
-- JUnit 5
+- JUnit
 - Mockito
 
 ## Nomenclatura
 
-| Elemento       | Convenção            | Exemplo                   |
-|----------------| -------------------- |---------------------------|
-| Pastas         | camelCase           | `useCase`                 |
-| Classes        | PascalCase           | `CreateUserUseCase`       |
-| Interfaces     | PascalCase           | `UserRepository`          |
-| Métodos        | camelCase            | `createUser()`            |
-| Variáveis      | camelCase            | `userName`                |
-| Constantes     | SCREAMING_SNAKE_CASE | `MAX_RETRY`               |
-| Pacotes        | lowercase            | `com.project.auth`        |
-| Arquivos `.md` | kebab-case           | `create-user-use-case.md` |
-| Endpoints REST | kebab-case           | `/sign-in`                |
-| Campos JSON    | camelCase            | `expirationDate`          |
-
+| Elemento             | Convenção    | Exemplo                   |
+|----------------------|--------------|---------------------------|
+| Pastas               | camelCase    | `useCase`                 |
+| Classes              | PascalCase   | `CreateUserUseCase`       |
+| Interfaces           | PascalCase   | `UserRepository`          |
+| Métodos              | camelCase    | `createUser()`            |
+| Variáveis            | camelCase    | `userName`                |
+| Constantes           | SNAKE_CASE   | `MAX_RETRY`               |
+| Pacotes              | lowercase    | `com.project.auth`        |
+| Arquivos `.md`       | kebab-case   | `create-user-use-case.md` |
+| Endpoints REST       | kebab-case   | `/sign-in`                |
+| Campos JSON          | camelCase    | `expirationDate`          |
 
 ## Architecture
 - DDD
@@ -57,38 +51,22 @@ Definir os requisitos técnicos, arquiteturais e operacionais para o desenvolvim
 src/main/java/com/api
 │
 ├── domain
-│   ├── user
-│   │   ├── entity
-│   │   └── repository
-│   │
-│   └── coupon
-│       ├── entity
-│       └── repository
-│
-├── infrastructure
-│   ├── user
-│   │   ├── service
-│   │   └── dao
-│   │
-│   └── coupon
-│       ├── service
-│       └── dao
+│   └── [entidade]
+|        ├── repository (interfaces que abstraem a conexão ao serviço de armazenamento)
+│        └── entity 
 │
 ├── application
-│   ├── user
-│   │   ├── use-case
-│   │   └── dto
-│   │
-│   └── coupon
-│       ├── use-case
-│       └── dto
+│   └── [entidade]
+│        ├── port (interfaces que abstraem a implementação de ferramentas externas)
+│        └── useCase
 │
-└── interface
-    ├── user
-    │    ├── controller
-    │    └── dto
-    │
-    └── coupon
+├── infrastructure
+│   └── [entidade]
+│        ├── service
+│        └── dao (Camada de acesso ao banco de dados, implementa uma abstraçãod de repository)
+│
+└── presentation
+    └── [entidade]
          ├── controller
-         └── dto
+         └── dto (Validação de payloads com jakarta)
 

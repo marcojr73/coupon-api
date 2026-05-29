@@ -1,9 +1,14 @@
 openapi: 3.0.3
 info:
   title: Coupon API
-  description: API para gerenciamento de cupons.
+  description: |
+    API para gerenciamento de cupons.
+
+    **Repositório GitHub:** [marcojr73/coupon-api](https://github.com/marcojr73/coupon-api)
   version: 1.0.0
 servers:
+  - url: https://cupons.marcojunior.dev
+    description: Servidor EC2
   - url: http://localhost:8080
     description: Servidor Local
 paths:
